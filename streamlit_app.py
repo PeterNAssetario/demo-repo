@@ -220,10 +220,10 @@ if uploaded_file:
     
     # Set up plots:
     fig1 = plt.pyplot.figure(figsize=(12, 6))
-    fig1 = sns.kdeplot(post_sample_A, color="blue")
-    fig1 = sns.kdeplot(post_sample_B, color="red")
-    l1 = fig1.lines[0]
-    l2 = fig1.lines[1]
+    fig_temp = sns.kdeplot(post_sample_A, color="blue")
+    fig_temp = sns.kdeplot(post_sample_B, color="red")
+    l1 = fig_temp.lines[0]
+    l2 = fig_temp.lines[1]
     x1 = l1.get_xydata()[:,0]
     x2 = l2.get_xydata()[:,0]
     y1 = l1.get_xydata()[:,1]
@@ -232,36 +232,27 @@ if uploaded_file:
     x2_new = x2[[all(tup) for tup in zip(list(x2 >= hdi_B[0]), list(x2 <= hdi_B[1]))]]
     y1_new = y1[[all(tup) for tup in zip(list(x1 >= hdi_A[0]), list(x1 <= hdi_A[1]))]]
     y2_new = y2[[all(tup) for tup in zip(list(x2 >= hdi_B[0]), list(x2 <= hdi_B[1]))]]
-    fig1.fill_between(x1_new, y1_new, color="blue", alpha=0.3)
-    fig1.fill_between(x2_new, y2_new, color="red", alpha=0.3)
-    fig1.set(title='Distribution of ARPU A & B')
-    fig1.legend(labels=['Control','Personalised'])
-    plt.pyplot.show()
-    #st.pyplot(fig1)
+    plt.pyplot.fill_between(x1_new, y1_new, color="blue", alpha=0.3)
+    plt.pyplot.fill_between(x2_new, y2_new, color="red", alpha=0.3)
+    plt.pyplot.title('Distribution of ARPU A & B')
+    plt.pyplot.legend(labels=['Control','Personalised'])
+    st.pyplot(fig1)
     
-    fig = plt.pyplot.figure(figsize=(12, 6))
-    fig = sns.kdeplot(post_sample_uplift, color="purple")
-    l = fig.lines[0]
+    fig2 = plt.pyplot.figure(figsize=(12, 6))
+    fig_temp = sns.kdeplot(post_sample_uplift, color="purple")
+    l = fig_temp.lines[0]
     x = l.get_xydata()[:,0]
     y = l.get_xydata()[:,1]
     x_new = x[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
     y_new = y[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
-    fig.fill_between(x_new, y_new, color="purple", alpha=0.3)
-    fig.set(title='Apporximate Distribution of Uplifts')
-    plt.pyplot.show()
-    #st.pyplot(fig)
+    plt.pyplot.fill_between(x_new, y_new, color="purple", alpha=0.3)
+    plt.pyplot.title('Apporximate Distribution of Uplifts')
+    st.pyplot(fig2)
 
     # Set up end tables:
     ncol1, ncol2 = st.columns([2, 1])
 
-    #table = pd.DataFrame(
-    #    {
-    #        "Converted": [conversions_a, conversions_b],
-    #        "Total": [visitors_a, visitors_b],
-    #        "% Converted": [st.session_state.cra, st.session_state.crb],
-    #    },
-    #    index=pd.Index(["Control", "Treatment"]),
-    #)
+    # Table1
     output_df = pd.DataFrame(columns=["Metric", "Conversion", "Revenue"])
     output_df["Metric"] = ["P( P > C)", "E( loss | P > C)", "E( loss | C > P)"]
     output_df["Conversion"] = [
@@ -276,6 +267,7 @@ if uploaded_file:
     ]
     table1 = ncol1.write(output_df)
 
+    # Table2
     output_df2 = pd.DataFrame(columns=["Metric", "Control", "Personalised", "Personalised-Control"])
     output_df2["Metric"] = ["sample size", "conversion", "ARPU", "ARPPU", "95% HDI"]
     output_df2["Control"] = [
@@ -300,19 +292,3 @@ if uploaded_file:
         "[%.4f€, %.4f€]" % (hdi_diff[0], hdi_diff[1]),
     ]
     table2 = ncol1.write(output_df2)
-    #metrics = pd.DataFrame(
-    #    {
-    #        "p-value": [st.session_state.p],
-    #        "z-score": [st.session_state.z],
-    #        "uplift": [st.session_state.uplift],
-    #    },
-    #    index=pd.Index(["Metrics"]),
-    #)
-    # Color negative values red; color significant p-value green and not significant red
-    #table2 = ncol1.write(
-    #    metrics.style.format(
-    #        formatter={("p-value", "z-score"): "{:.3g}", ("uplift"): "{:.3g}%"}
-    #    )
-    #    .applymap(style_negative, props="color:red;")
-    #    .apply(style_p_value, props="color:red;", axis=1, subset=["p-value"])
-    #)
