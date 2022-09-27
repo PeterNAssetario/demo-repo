@@ -151,9 +151,9 @@ if uploaded_file:
             st.markdown("### Parameters")
             st.slider(
                 "Posterior Creadibility (HDI)",
-                min_value=0.01#0.80,
-                max_value=0.1#0.99,
-                value=0.05#0.90,
+                min_value=0.01,#0.80,
+                max_value=0.1,#0.99,
+                value=0.05,#0.90,
                 step=0.01,
                 key="HDI",
                 help=" Values of θ that have at least some minimal level of posterior credibility, such that the total probability of all such θ values is HDI% ",
