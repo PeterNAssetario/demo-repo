@@ -1,9 +1,13 @@
-import streamlit as st
 import pandas as pd
 import numpy as np
-import scipy.stats
-from scipy.stats import norm
-import altair as alt
+import matplotlib as plt
+import seaborn as sns
+import arviz as az
+%matplotlib inline
+
+from ab_testing.constants import client_name, target_col
+from ab_testing.distribution_fit.fit_distribution import FitDistribution
+from ab_testing.predictions.produce_predictions import ProducePredictions
 
 st.set_page_config(
     page_title="A/B Testing App", page_icon="📊", initial_sidebar_state="expanded"
@@ -84,7 +88,7 @@ Upload your experiment results to see the significance of your A/B test.
 """
 )
 
-uploaded_file = st.file_uploader("Upload CSV", type=".csv")
+uploaded_file = st.file_uploader("Upload Parquet", type=".p")
 
 use_example_file = st.checkbox(
     "Use example file", False, help="Use in-built example file to demo the app"
@@ -96,9 +100,9 @@ result_default = None
 # If CSV is not uploaded and checkbox is filled, use values from the example file
 # and pass them down to the next if block
 if use_example_file:
-    uploaded_file = "Website_Results.csv"
-    ab_default = ["variant"]
-    result_default = ["converted"]
+    uploaded_file = "bingo_aloha_data.p"
+    ab_default = ["test_group"]
+    result_default = ["total_wins_spend"]
 
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
@@ -114,6 +118,13 @@ if uploaded_file:
             help="Select which column refers to your A/B testing labels.",
             default=ab_default,
         )
+        result = st.multiselect(
+            "Result column",
+            options=df.columns,
+            help="Select which column shows the result of the test.",
+            default=result_default,
+        )
+
         if ab:
             control = df[ab[0]].unique()[0]
             treatment = df[ab[0]].unique()[1]
@@ -124,15 +135,9 @@ if uploaded_file:
             )
             if decide == "No":
                 control, treatment = treatment, control
-            visitors_a = df[ab[0]].value_counts()[control]
-            visitors_b = df[ab[0]].value_counts()[treatment]
+            #visitors_a = df[ab[0]].value_counts()[control]
+            #visitors_b = df[ab[0]].value_counts()[treatment]
 
-        result = st.multiselect(
-            "Result column",
-            options=df.columns,
-            help="Select which column shows the result of the test.",
-            default=result_default,
-        )
 
         if result:
             conversions_a = (
@@ -144,21 +149,14 @@ if uploaded_file:
 
         with st.expander("Adjust test parameters"):
             st.markdown("### Parameters")
-            st.radio(
-                "Hypothesis type",
-                options=["One-sided", "Two-sided"],
-                index=0,
-                key="hypothesis",
-                help="TBD",
-            )
             st.slider(
-                "Significance level (α)",
-                min_value=0.01,
-                max_value=0.10,
-                value=0.05,
+                "Posterior Creadibility (HDI)",
+                min_value=0.01#0.80,
+                max_value=0.1#0.99,
+                value=0.05#0.90,
                 step=0.01,
-                key="alpha",
-                help=" The probability of mistakenly rejecting the null hypothesis, if the null hypothesis is true. This is also called false positive and type I error. ",
+                key="HDI",
+                help=" Values of θ that have at least some minimal level of posterior credibility, such that the total probability of all such θ values is HDI% ",
             )
 
         submit_button = st.form_submit_button(label="Submit")
@@ -169,7 +167,8 @@ if uploaded_file:
 
     # type(uploaded_file) == str, means the example file was used
     name = (
-        "Website_Results.csv" if isinstance(uploaded_file, str) else uploaded_file.name
+        #"Website_Results.csv" if isinstance(uploaded_file, str) else uploaded_file.name
+        "bingo_aloha_data.p" if isinstance(uploaded_file, str) else uploaded_file.name
     )
     st.write("")
     st.write("## Results for A/B test from ", name)
