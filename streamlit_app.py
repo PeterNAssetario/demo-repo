@@ -158,9 +158,9 @@ if uploaded_file:
             st.markdown("### Parameters")
             st.slider(
                 "Posterior Creadibility (HDI)",
-                min_value=0.01,#0.80,
-                max_value=0.1,#0.99,
-                value=0.05,#0.90,
+                min_value=0.80,
+                max_value=0.99,
+                value=0.90,
                 step=0.01,
                 key="HDI",
                 help=" Values of θ that have at least some minimal level of posterior credibility, such that the total probability of all such θ values is HDI% ",
@@ -174,36 +174,51 @@ if uploaded_file:
 
     # type(uploaded_file) == str, means the example file was used
     name = (
-        #"Website_Results.csv" if isinstance(uploaded_file, str) else uploaded_file.name
         "bingo_aloha_data.p" if isinstance(uploaded_file, str) else uploaded_file.name
     )
     st.write("")
     st.write("## Results for A/B test from ", name)
     st.write("")
-
+    
+    # Create test results:
+    result = ProducePredictions()
+    results_conversion = result.produce_results_conversion(initial_data)
+    results_revenue = result.produce_results_revenue('lognorm', initial_data)
+    results_posterior_sample = result._produce_results_lognorm_dist_carry_value(initial_data)
+    
     # Obtain the metrics to display
-    calculate_significance(
-        conversions_a,
-        conversions_b,
-        visitors_a,
-        visitors_b,
-        st.session_state.hypothesis,
-        st.session_state.alpha,
-    )
-
+    #calculate_significance(
+    #    conversions_a,
+    #    conversions_b,
+    #    visitors_a,
+    #    visitors_b,
+    #    st.session_state.hypothesis,
+    #    st.session_state.alpha,
+    #)
+    
+    # Set up metrics:
+    post_sample_A      = results_posterior_sample[1]
+    post_sample_B      = results_posterior_sample[0]
+    post_sample_uplift = (post_sample_B - post_sample_A) / post_sample_A
+    hdi_A              = az.hdi(post_sample_A, hdi_prob=st.session_state.alpha)
+    hdi_B              = az.hdi(post_sample_B, hdi_prob=st.session_state.alpha)
+    hdi_diff           = az.hdi(diff_post_sample, hdi_prob=st.session_state.alpha)
+    
     mcol1, mcol2 = st.columns(2)
 
     # Use st.metric to diplay difference in conversion rates
     with mcol1:
         st.metric(
-            "Delta",
-            value=f"{(st.session_state.crb - st.session_state.cra):.3g}%",
-            delta=f"{(st.session_state.crb - st.session_state.cra):.3g}%",
+            "Delta ARPUs",
+            value = "%.4f€" % (results_revenue[0]['avg_values'] - results_revenue[1]['avg_values']),
         )
     # Display whether or not A/B test result is statistically significant
     with mcol2:
-        st.metric("Significant?", value=st.session_state.significant)
-
+        st.metric(
+            "Delta Conversion",
+            value = "%.2f%%" % ((results_conversion[0]['positive_rate'] - results_conversion[1]['positive_rate']) * 100),
+        )
+    
     # Create a single-row, two-column DataFrame to use in bar chart
     results_df = pd.DataFrame(
         {
