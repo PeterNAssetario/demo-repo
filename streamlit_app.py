@@ -7,14 +7,14 @@ import altair as alt
 
 
 #import matplotlib as plt
-#import seaborn as sns
-#import arviz as az
-#from pathlib import Path
+import seaborn as sns
+import arviz as az
+from pathlib import Path
 #%matplotlib inline
 
-#from ab_testing.constants import client_name, target_col
-#from ab_testing.distribution_fit.fit_distribution import FitDistribution
-#from ab_testing.predictions.produce_predictions import ProducePredictions
+from ab_testing.constants import client_name, target_col
+from ab_testing.distribution_fit.fit_distribution import FitDistribution
+from ab_testing.predictions.produce_predictions import ProducePredictions
 
 st.set_page_config(
     page_title="A/B Testing App", page_icon="📊", initial_sidebar_state="expanded"
