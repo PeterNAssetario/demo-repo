@@ -181,6 +181,7 @@ if uploaded_file:
     st.write("")
     
     # Create test results:
+    initial_data = df
     result = ProducePredictions()
     results_conversion = result.produce_results_conversion(initial_data)
     results_revenue = result.produce_results_revenue('lognorm', initial_data)
