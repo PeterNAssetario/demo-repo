@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib as plt
 import seaborn as sns
 import arviz as az
-%matplotlib inline
+#%matplotlib inline
 
 from ab_testing.constants import client_name, target_col
 from ab_testing.distribution_fit.fit_distribution import FitDistribution
