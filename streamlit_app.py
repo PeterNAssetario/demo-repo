@@ -20,74 +20,6 @@ st.set_page_config(
     page_title="A/B Testing App", page_icon="📊", initial_sidebar_state="expanded"
 )
 
-def conversion_rate(conversions, visitors):
-    return (conversions / visitors) * 100
-
-def lift(cra, crb):
-    return ((crb - cra) / cra) * 100
-
-def std_err(cr, visitors):
-    return np.sqrt((cr / 100 * (1 - cr / 100)) / visitors)
-
-def std_err_diff(sea, seb):
-    return np.sqrt(sea ** 2 + seb ** 2)
-
-def z_score(cra, crb, error):
-    return ((crb - cra) / error) / 100
-
-
-def p_value(z, hypothesis):
-    if hypothesis == "One-sided" and z < 0:
-        return 1 - norm().sf(z)
-    elif hypothesis == "One-sided" and z >= 0:
-        return norm().sf(z) / 2
-    else:
-        return norm().sf(z)
-
-
-def significance(alpha, p):
-    return "YES" if p < alpha else "NO"
-
-
-def plot_chart(df):
-    chart = (
-        alt.Chart(df)
-        .mark_bar(color="#61b33b")
-        .encode(
-            x=alt.X("Group:O", axis=alt.Axis(labelAngle=0)),
-            y=alt.Y("Conversion:Q", title="Conversion rate (%)"),
-            opacity="Group:O",
-        )
-        .properties(width=500, height=500)
-    )
-    chart_text = chart.mark_text(
-        align="center", baseline="middle", dy=-10, color="black"
-    ).encode(text=alt.Text("Conversion:Q", format=",.3g"))
-    return st.altair_chart((chart + chart_text).interactive())
-
-def style_negative(v, props=""):
-    return props if v < 0 else None
-
-def style_p_value(v, props=""):
-    return np.where(v < st.session_state.alpha, "color:green;", props)
-
-def calculate_significance(
-    conversions_a, conversions_b, visitors_a, visitors_b, hypothesis, alpha
-):
-    st.session_state.cra = conversion_rate(int(conversions_a), int(visitors_a))
-    st.session_state.crb = conversion_rate(int(conversions_b), int(visitors_b))
-    st.session_state.uplift = lift(st.session_state.cra, st.session_state.crb)
-    st.session_state.sea = std_err(st.session_state.cra, float(visitors_a))
-    st.session_state.seb = std_err(st.session_state.crb, float(visitors_b))
-    st.session_state.sed = std_err_diff(st.session_state.sea, st.session_state.seb)
-    st.session_state.z = z_score(
-        st.session_state.cra, st.session_state.crb, st.session_state.sed
-    )
-    st.session_state.p = p_value(st.session_state.z, st.session_state.hypothesis)
-    st.session_state.significant = significance(
-        st.session_state.alpha, st.session_state.p
-    )
-
 st.write(
     """
 # 📊 A/B Testing
@@ -186,16 +118,6 @@ if uploaded_file:
     results_conversion = result.produce_results_conversion(initial_data)
     results_revenue = result.produce_results_revenue('lognorm', initial_data)
     results_posterior_sample = result._produce_results_lognorm_dist_carry_value(initial_data)
-    
-    # Obtain the metrics to display
-    #calculate_significance(
-    #    conversions_a,
-    #    conversions_b,
-    #    visitors_a,
-    #    visitors_b,
-    #    st.session_state.hypothesis,
-    #    st.session_state.alpha,
-    #)
     
     # Set up metrics:
     post_sample_A      = results_posterior_sample[1]
