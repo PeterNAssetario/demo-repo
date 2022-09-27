@@ -105,7 +105,7 @@ if use_example_file:
     result_default = ["total_wins_spend"]
 
 if uploaded_file:
-    df = pd.read_csv(uploaded_file)
+    df = pd.read_parquet(uploaded_file)
     
     st.markdown("### Data preview")
     st.dataframe(df.head())
