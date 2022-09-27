@@ -162,7 +162,7 @@ if uploaded_file:
                 max_value=0.99,
                 value=0.90,
                 step=0.01,
-                key="HDI",
+                key="hdi",
                 help=" Values of θ that have at least some minimal level of posterior credibility, such that the total probability of all such θ values is HDI% ",
             )
 
@@ -201,9 +201,9 @@ if uploaded_file:
     post_sample_A      = results_posterior_sample[1]
     post_sample_B      = results_posterior_sample[0]
     post_sample_uplift = (post_sample_B - post_sample_A) / post_sample_A
-    hdi_A              = az.hdi(post_sample_A, hdi_prob=st.session_state.alpha)
-    hdi_B              = az.hdi(post_sample_B, hdi_prob=st.session_state.alpha)
-    hdi_diff           = az.hdi(diff_post_sample, hdi_prob=st.session_state.alpha)
+    hdi_A              = az.hdi(post_sample_A, hdi_prob=st.session_state.hdi)
+    hdi_B              = az.hdi(post_sample_B, hdi_prob=st.session_state.hdi)
+    hdi_diff           = az.hdi(diff_post_sample, hdi_prob=st.session_state.hdi)
     
     # Draw up tables:
     mcol1, mcol2 = st.columns(2)
