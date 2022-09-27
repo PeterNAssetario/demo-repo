@@ -236,8 +236,8 @@ if uploaded_file:
     fig1.fill_between(x2_new, y2_new, color="red", alpha=0.3)
     fig1.set(title='Distribution of ARPU A & B')
     fig1.legend(labels=['Control','Personalised'])
-    #plt.pyplot.show()
-    st.pyplot(fig1)
+    plt.pyplot.show()
+    #st.pyplot(fig1)
     
     fig = plt.pyplot.figure(figsize=(12, 6))
     fig = sns.kdeplot(post_sample_uplift, color="purple")
@@ -248,8 +248,8 @@ if uploaded_file:
     y_new = y[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
     fig.fill_between(x_new, y_new, color="purple", alpha=0.3)
     fig.set(title='Apporximate Distribution of Uplifts')
-    #plt.pyplot.show()
-    st.pyplot(fig)
+    plt.pyplot.show()
+    #st.pyplot(fig)
 
     # Set up end tables:
     ncol1, ncol2 = st.columns([2, 1])
