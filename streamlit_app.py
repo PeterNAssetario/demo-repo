@@ -203,7 +203,7 @@ if uploaded_file:
     post_sample_uplift = (post_sample_B - post_sample_A) / post_sample_A
     hdi_A              = az.hdi(post_sample_A, hdi_prob=st.session_state.hdi)
     hdi_B              = az.hdi(post_sample_B, hdi_prob=st.session_state.hdi)
-    hdi_diff           = az.hdi(diff_post_sample, hdi_prob=st.session_state.hdi)
+    hdi_diff           = az.hdi(post_sample_uplift, hdi_prob=st.session_state.hdi)
     
     # Draw up tables:
     mcol1, mcol2 = st.columns(2)
