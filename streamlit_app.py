@@ -7,7 +7,7 @@ import altair as alt
 
 
 #import matplotlib as plt
-import seaborn as sns
+#import seaborn as sns
 import arviz as az
 from pathlib import Path
 #%matplotlib inline
