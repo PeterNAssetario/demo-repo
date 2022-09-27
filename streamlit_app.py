@@ -219,6 +219,7 @@ if uploaded_file:
         )
     
     # Set up plots:
+    fig1 = plt.pyplot.figure(figsize=(12, 6))
     fig1 = sns.kdeplot(post_sample_A, color="blue")
     fig1 = sns.kdeplot(post_sample_B, color="red")
     l1 = fig1.lines[0]
@@ -238,6 +239,7 @@ if uploaded_file:
     #plt.pyplot.show()
     st.pyplot(fig1)
     
+    fig = plt.pyplot.figure(figsize=(12, 6))
     fig = sns.kdeplot(post_sample_uplift, color="purple")
     l = fig.lines[0]
     x = l.get_xydata()[:,0]
