@@ -50,3 +50,15 @@ class ProducePredictions:
         test.add_variant_data("C", df_C["total_wins_spend"].values)
 
         return test.evaluate(seed=42)
+
+    
+    def _produce_results_lognorm_dist_carry_value(self, df: pd.DataFrame) -> list:
+        df_P = df.loc[(df["test_group"].str.lower() == "p") | (df["test_group"].str.lower() == "assetario")]
+        df_C = df.loc[(df["test_group"].str.lower() == "c") | (df["test_group"].str.lower() == "control")]
+
+        test = DeltaLognormalDataTest()
+
+        test.add_variant_data("P", df_P["total_wins_spend"].values)
+        test.add_variant_data("C", df_C["total_wins_spend"].values)
+
+        return test.carry_value(seed=42)
