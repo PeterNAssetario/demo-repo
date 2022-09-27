@@ -1,15 +1,13 @@
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/streamlit/example-app-ab-testing/main)
+# AB-testing
+Assetario repository regarding AB testing setup
 
-# A/B Testing App
+How to use the repo:
 
-Upload your experiment results to see the significance of your A/B test!
+Check out exploration.ipynb notebook to explore empirical distribution and find out what known theoretical disgtribution fits the data the best based on AIC / BIC, graphical evidence and Kolmogorov-Smirnov test.
+MCMC simulation using pymc3 library are performed to compare personal and control group.
 
-<img src="https://user-images.githubusercontent.com/27242399/140516190-08654348-5c6f-4086-8b0d-1a8ee5bc2822.png" width="400"/>
+Run main.py to get the results for chosen client, Bernoulli distribution for conversions and lognormal distribution for revenues. There are three steps in the pipeline:
 
-## Installation :balloon:
-
-```bash
-git clone https://github.com/streamlit/example-app-ab-testing.git
-cd example-app-ab-testing
-pip install -r requirements.txt
-```
+A. Data acquisition - implemented for all existing clients.
+B. Distribution fit - Bernoulli distribution for the conversions and lognormal distribution for the revenues.
+C. Produce predictions - probability for the P being the best with the expected losses in both cases for conversions and revenue.
