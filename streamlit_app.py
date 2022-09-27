@@ -6,8 +6,8 @@ from scipy.stats import norm
 import altair as alt
 
 
-#import matplotlib as plt
-#import seaborn as sns
+import matplotlib as plt
+import seaborn as sns
 import arviz as az
 from pathlib import Path
 #%matplotlib inline
@@ -204,62 +204,112 @@ if uploaded_file:
     hdi_B              = az.hdi(post_sample_B, hdi_prob=st.session_state.alpha)
     hdi_diff           = az.hdi(diff_post_sample, hdi_prob=st.session_state.alpha)
     
+    # Draw up tables:
     mcol1, mcol2 = st.columns(2)
-
-    # Use st.metric to diplay difference in conversion rates
     with mcol1:
         st.metric(
             "Delta ARPUs",
             value = "%.4f€" % (results_revenue[0]['avg_values'] - results_revenue[1]['avg_values']),
         )
-    # Display whether or not A/B test result is statistically significant
     with mcol2:
         st.metric(
             "Delta Conversion",
             value = "%.2f%%" % ((results_conversion[0]['positive_rate'] - results_conversion[1]['positive_rate']) * 100),
         )
     
-    # Create a single-row, two-column DataFrame to use in bar chart
-    results_df = pd.DataFrame(
-        {
-            "Group": ["Control", "Treatment"],
-            "Conversion": [st.session_state.cra, st.session_state.crb],
-        }
-    )
-    st.write("")
-    st.write("")
+    # Set up plots:
+    fig1 = sns.kdeplot(post_sample_A, color="blue")
+    fig1 = sns.kdeplot(post_sample_B, color="red")
+    l1 = fig1.lines[0]
+    l2 = fig1.lines[1]
+    x1 = l1.get_xydata()[:,0]
+    x2 = l2.get_xydata()[:,0]
+    y1 = l1.get_xydata()[:,1]
+    y2 = l2.get_xydata()[:,1]
+    x1_new = x1[[all(tup) for tup in zip(list(x1 >= hdi_A[0]), list(x1 <= hdi_A[1]))]]
+    x2_new = x2[[all(tup) for tup in zip(list(x2 >= hdi_B[0]), list(x2 <= hdi_B[1]))]]
+    y1_new = y1[[all(tup) for tup in zip(list(x1 >= hdi_A[0]), list(x1 <= hdi_A[1]))]]
+    y2_new = y2[[all(tup) for tup in zip(list(x2 >= hdi_B[0]), list(x2 <= hdi_B[1]))]]
+    fig1.fill_between(x1_new, y1_new, color="blue", alpha=0.3)
+    fig1.fill_between(x2_new, y2_new, color="red", alpha=0.3)
+    fig1.set(title='Distribution of ARPU A & B')
+    fig1.legend(labels=['Control','Personalised'])
+    #plt.pyplot.show()
+    st.pyplot(fig1)
+    
+    fig = sns.kdeplot(post_sample_uplift, color="purple")
+    l = fig.lines[0]
+    x = l.get_xydata()[:,0]
+    y = l.get_xydata()[:,1]
+    x_new = x[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
+    y_new = y[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
+    fig.fill_between(x_new, y_new, color="purple", alpha=0.3)
+    fig.set(title='Apporximate Distribution of Uplifts')
+    #plt.pyplot.show()
+    st.pyplot(fig)
 
-    # Plot bar chart of conversion rates
-    plot_chart(results_df)
-
+    # Set up end tables:
     ncol1, ncol2 = st.columns([2, 1])
 
-    table = pd.DataFrame(
-        {
-            "Converted": [conversions_a, conversions_b],
-            "Total": [visitors_a, visitors_b],
-            "% Converted": [st.session_state.cra, st.session_state.crb],
-        },
-        index=pd.Index(["Control", "Treatment"]),
-    )
+    #table = pd.DataFrame(
+    #    {
+    #        "Converted": [conversions_a, conversions_b],
+    #        "Total": [visitors_a, visitors_b],
+    #        "% Converted": [st.session_state.cra, st.session_state.crb],
+    #    },
+    #    index=pd.Index(["Control", "Treatment"]),
+    #)
+    output_df = pd.DataFrame(columns=["Metric", "Conversion", "Revenue"])
+    output_df["Metric"] = ["P( P > C)", "E( loss | P > C)", "E( loss | C > P)"]
+    output_df["Conversion"] = [
+        "%.4f%%" % (results_conversion[0]["prob_being_best"] * 100),
+        "%.4f%%" % (results_conversion[0]["expected_loss"] * 100),
+        "%.4f%%" % (results_conversion[1]["expected_loss"] * 100),
+    ]
+    output_df["Revenue"] = [
+        "%.4f%%" % (results_revenue[0]["prob_being_best"] * 100),
+        "%.4f%%" % (results_revenue[0]["expected_loss"] * 100),
+        "%.4f%%" % (results_revenue[1]["expected_loss"] * 100),
+    ]
+    table1 = ncol1.write(output_df)
 
-    # Format "% Converted" column values to 3 decimal places
-    table1 = ncol1.write(table.style.format(formatter={("% Converted"): "{:.3g}%"}))
-
-    metrics = pd.DataFrame(
-        {
-            "p-value": [st.session_state.p],
-            "z-score": [st.session_state.z],
-            "uplift": [st.session_state.uplift],
-        },
-        index=pd.Index(["Metrics"]),
-    )
-
+    output_df2 = pd.DataFrame(columns=["Metric", "Control", "Personalised", "Personalised-Control"])
+    output_df2["Metric"] = ["sample size", "conversion", "ARPU", "ARPPU", "95% HDI"]
+    output_df2["Control"] = [
+        "%d" % (results_revenue[1]['totals']),
+        "%.2f%%" % (results_conversion[1]['positive_rate'] * 100),
+        "%.4f€" % (results_revenue[1]['avg_values']),
+        "%.4f€" % (results_revenue[1]['avg_positive_values']),
+        "[%.4f€, %.4f€]" % (hdi_A[0], hdi_A[1]),
+    ]
+    output_df2["Personalised"] = [
+        "%d" % (results_revenue[0]['totals']),
+        "%.2f%%" % (results_conversion[0]['positive_rate'] * 100),
+        "%.4f€" % (results_revenue[0]['avg_values']),
+        "%.4f€" % (results_revenue[0]['avg_positive_values']),
+        "[%.4f€, %.4f€]" % (hdi_B[0], hdi_B[1]),
+    ]
+    output_df2["Personalised-Control"] = [
+        np.NAN,
+        "%.2f%%" % ((results_conversion[0]['positive_rate'] - results_conversion[1]['positive_rate']) * 100),
+        "%.4f€" % (results_revenue[0]['avg_values'] - results_revenue[1]['avg_values']),
+        "%.4f€" % (results_revenue[0]['avg_positive_values'] - results_revenue[1]['avg_positive_values']),
+        "[%.4f€, %.4f€]" % (hdi_diff[0], hdi_diff[1]),
+    ]
+    table2 = ncol1.write(output_df2)
+    #metrics = pd.DataFrame(
+    #    {
+    #        "p-value": [st.session_state.p],
+    #        "z-score": [st.session_state.z],
+    #        "uplift": [st.session_state.uplift],
+    #    },
+    #    index=pd.Index(["Metrics"]),
+    #)
     # Color negative values red; color significant p-value green and not significant red
-    table2 = ncol1.write(
-        metrics.style.format(
-            formatter={("p-value", "z-score"): "{:.3g}", ("uplift"): "{:.3g}%"}
-        )
-        .applymap(style_negative, props="color:red;")
-        .apply(style_p_value, props="color:red;", axis=1, subset=["p-value"])
-    )
+    #table2 = ncol1.write(
+    #    metrics.style.format(
+    #        formatter={("p-value", "z-score"): "{:.3g}", ("uplift"): "{:.3g}%"}
+    #    )
+    #    .applymap(style_negative, props="color:red;")
+    #    .apply(style_p_value, props="color:red;", axis=1, subset=["p-value"])
+    #)
