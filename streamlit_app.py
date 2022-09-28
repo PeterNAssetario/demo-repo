@@ -9,7 +9,6 @@ import matplotlib as plt
 import seaborn as sns
 import arviz as az
 from pathlib import Path
-#%matplotlib inline
 
 from ab_testing.constants import client_name, target_col
 from ab_testing.distribution_fit.fit_distribution import FitDistribution
@@ -147,8 +146,8 @@ if uploaded_file:
         st.subheader("Distribution of posterior ARPU A & B")
         fig = plt.figure.Figure()
         ax = fig.subplots()
-        fig_temp = sns.kdeplot(post_sample_A, color="blue")
-        fig_temp = sns.kdeplot(post_sample_B, color="red")
+        fig_temp = sns.kdeplot(post_sample_A, color="blue", ax = ax)
+        fig_temp = sns.kdeplot(post_sample_B, color="red", ax = ax)
         l1 = fig_temp.lines[0]
         l2 = fig_temp.lines[1]
         x1 = l1.get_xydata()[:,0]
@@ -184,15 +183,15 @@ if uploaded_file:
     with row2_col2, _lock:
         st.subheader("Apporximate Distribution of Uplifts")
         fig2 = plt.figure.Figure()
-        ax2 = fig.subplots()
-        fig_temp2 = sns.kdeplot(post_sample_uplift, color="purple")
+        ax2 = fig2.subplots()
+        fig_temp2 = sns.kdeplot(post_sample_uplift, color="purple", ax = ax2)
         l = fig_temp2.lines[0]
         x = l.get_xydata()[:,0]
         y = l.get_xydata()[:,1]
         x_new = x[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
         y_new = y[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
         plt.pyplot.fill_between(x_new, y_new, color="purple", alpha=0.3)
-        st.pyplot(fig)
+        st.pyplot(fig2)
     
 #     fig2 = plt.pyplot.figure(figsize=(12, 6))
 #     fig_temp = sns.kdeplot(post_sample_uplift, color="purple")
@@ -233,20 +232,20 @@ if uploaded_file:
         "%.2f%%" % (results_conversion[1]['positive_rate'] * 100),
         "%.4f€" % (results_revenue[1]['avg_values']),
         "%.4f€" % (results_revenue[1]['avg_positive_values']),
-        "[%.4f€, %.4f€]" % (hdi_A[0], hdi_A[1]),
+        "[%.2f€, %.2f€]" % (hdi_A[0], hdi_A[1]),
     ]
     output_df2["Personalised"] = [
         "%d" % (results_revenue[0]['totals']),
         "%.2f%%" % (results_conversion[0]['positive_rate'] * 100),
         "%.4f€" % (results_revenue[0]['avg_values']),
         "%.4f€" % (results_revenue[0]['avg_positive_values']),
-        "[%.4f€, %.4f€]" % (hdi_B[0], hdi_B[1]),
+        "[%.2f€, %.2f€]" % (hdi_B[0], hdi_B[1]),
     ]
     output_df2["Personalised-Control"] = [
         np.NAN,
         "%.2f%%" % ((results_conversion[0]['positive_rate'] - results_conversion[1]['positive_rate']) * 100),
         "%.4f€" % (results_revenue[0]['avg_values'] - results_revenue[1]['avg_values']),
         "%.4f€" % (results_revenue[0]['avg_positive_values'] - results_revenue[1]['avg_positive_values']),
-        "[%.4f€, %.4f€]" % (hdi_diff[0], hdi_diff[1]),
+        "[%.2f€, %.2f€]" % (hdi_diff[0], hdi_diff[1]),
     ]
     table2 = row3_col2.write(output_df2)
