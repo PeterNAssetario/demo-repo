@@ -134,7 +134,7 @@ if uploaded_file:
         )
     
     st.write("")
-    matplotlib.use("agg")
+    plt.use("agg")
     _lock = plt.backends.backend_agg.RendererAgg.lock
     sns.set_style("darkgrid")
     
