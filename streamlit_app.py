@@ -144,8 +144,9 @@ if uploaded_file:
     
     with row2_col1, _lock:
         st.subheader("Distribution of posterior ARPU A & B")
-        fig = plt.figure.Figure()
-        ax = fig.subplots()
+        #fig = plt.figure.Figure()
+        #ax = fig.subplots()
+        fig, ax = plt.subplots()
         fig_temp = sns.kdeplot(post_sample_A, color="blue", ax = ax)
         fig_temp = sns.kdeplot(post_sample_B, color="red", ax = ax)
         l1 = fig_temp.lines[0]
@@ -182,14 +183,16 @@ if uploaded_file:
 
     with row2_col2, _lock:
         st.subheader("Apporximate Distribution of Uplifts")
-        fig2 = plt.figure.Figure()
-        ax2 = fig2.subplots()
+        #fig2 = plt.figure.Figure()
+        #ax2 = fig2.subplots()
+        fig2, ax2 = plt.subplots()
         fig_temp2 = sns.kdeplot(post_sample_uplift, color="purple", ax = ax2)
         l = fig_temp2.lines[0]
         x = l.get_xydata()[:,0]
         y = l.get_xydata()[:,1]
         x_new = x[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
         y_new = y[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
+        ax2.xaxis.set_major_formatter(plt.ticker.PercentFormatter())
         plt.pyplot.fill_between(x_new, y_new, color="purple", alpha=0.3)
         st.pyplot(fig2)
     
@@ -222,6 +225,7 @@ if uploaded_file:
         "%.4f%%" % (results_revenue[0]["expected_loss"] * 100),
         "%.4f%%" % (results_revenue[1]["expected_loss"] * 100),
     ]
+    output_df = output_df.set_index('Metric')
     table1 = row3_col1.write(output_df)
 
     # Table2
@@ -248,4 +252,5 @@ if uploaded_file:
         "%.4f€" % (results_revenue[0]['avg_positive_values'] - results_revenue[1]['avg_positive_values']),
         "[%.2f€, %.2f€]" % (hdi_diff[0], hdi_diff[1]),
     ]
+    output_df2 = output_df2.set_index('Metric')
     table2 = row3_col2.write(output_df2)
