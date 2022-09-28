@@ -112,9 +112,11 @@ if uploaded_file:
     post_sample_A      = results_posterior_sample[1]
     post_sample_B      = results_posterior_sample[0]
     post_sample_uplift = (post_sample_B - post_sample_A) / post_sample_A
+    post_sample_diff   = post_sample_B - post_sample_A
     hdi_A              = az.hdi(post_sample_A, hdi_prob=st.session_state.hdi)
     hdi_B              = az.hdi(post_sample_B, hdi_prob=st.session_state.hdi)
     hdi_diff           = az.hdi(post_sample_uplift, hdi_prob=st.session_state.hdi)
+    hdi_diff_ab        = az.hdi(post_sample_diff, hdi_prob=st.session_state.hdi)
     
     # Draw up tables:
     st.write("")
@@ -139,7 +141,7 @@ if uploaded_file:
     
     # Set up plots:
     row2_space1, row2_col1, row2_space2, row2_col2, row2_space3 = st.columns(
-        (0.1, 1, 0.1, 1, 0.1)
+        (0.05, 1, 0.05, 1, 0.05)
     )
     
     with row2_col1, _lock:
@@ -158,29 +160,10 @@ if uploaded_file:
         x2_new = x2[[all(tup) for tup in zip(list(x2 >= hdi_B[0]), list(x2 <= hdi_B[1]))]]
         y1_new = y1[[all(tup) for tup in zip(list(x1 >= hdi_A[0]), list(x1 <= hdi_A[1]))]]
         y2_new = y2[[all(tup) for tup in zip(list(x2 >= hdi_B[0]), list(x2 <= hdi_B[1]))]]
-        #plt.pyplot.fill_between(x1_new, y1_new, color="blue", alpha=0.3)
-        #plt.pyplot.fill_between(x2_new, y2_new, color="red", alpha=0.3)
         ax.fill_between(x1_new, y1_new, color="blue", alpha=0.3)
         ax.fill_between(x2_new, y2_new, color="red", alpha=0.3)
         plt.pyplot.legend(labels=['Control','Personalised'])
         st.pyplot(fig)
-#     fig_temp = sns.kdeplot(post_sample_A, color="blue")
-#     fig_temp = sns.kdeplot(post_sample_B, color="red")
-#     l1 = fig_temp.lines[0]
-#     l2 = fig_temp.lines[1]
-#     x1 = l1.get_xydata()[:,0]
-#     x2 = l2.get_xydata()[:,0]
-#     y1 = l1.get_xydata()[:,1]
-#     y2 = l2.get_xydata()[:,1]
-#     x1_new = x1[[all(tup) for tup in zip(list(x1 >= hdi_A[0]), list(x1 <= hdi_A[1]))]]
-#     x2_new = x2[[all(tup) for tup in zip(list(x2 >= hdi_B[0]), list(x2 <= hdi_B[1]))]]
-#     y1_new = y1[[all(tup) for tup in zip(list(x1 >= hdi_A[0]), list(x1 <= hdi_A[1]))]]
-#     y2_new = y2[[all(tup) for tup in zip(list(x2 >= hdi_B[0]), list(x2 <= hdi_B[1]))]]
-#     plt.pyplot.fill_between(x1_new, y1_new, color="blue", alpha=0.3)
-#     plt.pyplot.fill_between(x2_new, y2_new, color="red", alpha=0.3)
-#     plt.pyplot.title('Distribution of ARPU A & B')
-#     plt.pyplot.legend(labels=['Control','Personalised'])
-#     st.pyplot(fig1)
 
     with row2_col2, _lock:
         st.subheader("Apporximate Distribution of Uplifts")
@@ -193,24 +176,12 @@ if uploaded_file:
         x_new = x[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
         y_new = y[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
         ax2.xaxis.set_major_formatter(plt.ticker.PercentFormatter())
-        #plt.pyplot.fill_between(x_new, y_new, color="purple", alpha=0.3)
         ax2.fill_between(x_new, y_new, color="purple", alpha=0.3)
         st.pyplot(fig2)
-    
-#     fig2 = plt.pyplot.figure(figsize=(12, 6))
-#     fig_temp = sns.kdeplot(post_sample_uplift, color="purple")
-#     l = fig_temp.lines[0]
-#     x = l.get_xydata()[:,0]
-#     y = l.get_xydata()[:,1]
-#     x_new = x[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
-#     y_new = y[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
-#     plt.pyplot.fill_between(x_new, y_new, color="purple", alpha=0.3)
-#     plt.pyplot.title('Apporximate Distribution of Uplifts')
-#     st.pyplot(fig2)
 
     # Set up end tables:
     row3_space1, row3_col1, row3_space2, row3_col2, row3_space3 = st.columns(
-        (0.1, 1, 0.1, 1, 0.1)
+        (0.05, 1, 0.05, 1, 0.05)
     )
 
     # Table1
@@ -227,7 +198,7 @@ if uploaded_file:
         "%.4f%%" % (results_revenue[1]["expected_loss"] * 100),
     ]
     output_df = output_df.set_index('Metric')
-    table1 = row3_col1.write(output_df)
+    table1 = row3_col2.write(output_df)
 
     # Table2
     output_df2 = pd.DataFrame(columns=["Metric", "Control", "Personalised", "Personalised-Control"])
@@ -237,21 +208,21 @@ if uploaded_file:
         "%.2f%%" % (results_conversion[1]['positive_rate'] * 100),
         "%.4f€" % (results_revenue[1]['avg_values']),
         "%.4f€" % (results_revenue[1]['avg_positive_values']),
-        "[%.2f€, %.2f€]" % (hdi_A[0], hdi_A[1]),
+        "[%.4f€, %.4f€]" % (hdi_A[0], hdi_A[1]),
     ]
     output_df2["Personalised"] = [
         "%d" % (results_revenue[0]['totals']),
         "%.2f%%" % (results_conversion[0]['positive_rate'] * 100),
         "%.4f€" % (results_revenue[0]['avg_values']),
         "%.4f€" % (results_revenue[0]['avg_positive_values']),
-        "[%.2f€, %.2f€]" % (hdi_B[0], hdi_B[1]),
+        "[%.4f€, %.4f€]" % (hdi_B[0], hdi_B[1]),
     ]
     output_df2["Personalised-Control"] = [
         np.NAN,
         "%.2f%%" % ((results_conversion[0]['positive_rate'] - results_conversion[1]['positive_rate']) * 100),
         "%.4f€" % (results_revenue[0]['avg_values'] - results_revenue[1]['avg_values']),
         "%.4f€" % (results_revenue[0]['avg_positive_values'] - results_revenue[1]['avg_positive_values']),
-        "[%.2f€, %.2f€]" % (hdi_diff[0], hdi_diff[1]),
+        "[%.4f€, %.4f€]" % (hdi_diff_ab[0], hdi_diff_ab[1]),
     ]
     output_df2 = output_df2.set_index('Metric')
-    table2 = row3_col2.write(output_df2)
+    table2 = row3_col1.write(output_df2)
