@@ -144,9 +144,8 @@ if uploaded_file:
     
     with row2_col1, _lock:
         st.subheader("Distribution of posterior ARPU A & B")
-        #fig = plt.figure.Figure()
-        #ax = fig.subplots()
-        fig, ax = plt.subplots()
+        fig = plt.figure.Figure()
+        ax = fig.add_subplot(111)
         fig_temp = sns.kdeplot(post_sample_A, color="blue", ax = ax)
         fig_temp = sns.kdeplot(post_sample_B, color="red", ax = ax)
         l1 = fig_temp.lines[0]
@@ -159,8 +158,10 @@ if uploaded_file:
         x2_new = x2[[all(tup) for tup in zip(list(x2 >= hdi_B[0]), list(x2 <= hdi_B[1]))]]
         y1_new = y1[[all(tup) for tup in zip(list(x1 >= hdi_A[0]), list(x1 <= hdi_A[1]))]]
         y2_new = y2[[all(tup) for tup in zip(list(x2 >= hdi_B[0]), list(x2 <= hdi_B[1]))]]
-        plt.pyplot.fill_between(x1_new, y1_new, color="blue", alpha=0.3)
-        plt.pyplot.fill_between(x2_new, y2_new, color="red", alpha=0.3)
+        #plt.pyplot.fill_between(x1_new, y1_new, color="blue", alpha=0.3)
+        #plt.pyplot.fill_between(x2_new, y2_new, color="red", alpha=0.3)
+        ax.fill_between(x1_new, y1_new, color="blue", alpha=0.3)
+        ax.fill_between(x2_new, y2_new, color="red", alpha=0.3)
         plt.pyplot.legend(labels=['Control','Personalised'])
         st.pyplot(fig)
 #     fig_temp = sns.kdeplot(post_sample_A, color="blue")
@@ -183,9 +184,8 @@ if uploaded_file:
 
     with row2_col2, _lock:
         st.subheader("Apporximate Distribution of Uplifts")
-        #fig2 = plt.figure.Figure()
-        #ax2 = fig2.subplots()
-        fig2, ax2 = plt.subplots()
+        fig2 = plt.figure.Figure()
+        ax2 = fig2.add_subplot(111)
         fig_temp2 = sns.kdeplot(post_sample_uplift, color="purple", ax = ax2)
         l = fig_temp2.lines[0]
         x = l.get_xydata()[:,0]
@@ -193,7 +193,8 @@ if uploaded_file:
         x_new = x[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
         y_new = y[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
         ax2.xaxis.set_major_formatter(plt.ticker.PercentFormatter())
-        plt.pyplot.fill_between(x_new, y_new, color="purple", alpha=0.3)
+        #plt.pyplot.fill_between(x_new, y_new, color="purple", alpha=0.3)
+        ax2.fill_between(x_new, y_new, color="purple", alpha=0.3)
         st.pyplot(fig2)
     
 #     fig2 = plt.pyplot.figure(figsize=(12, 6))
