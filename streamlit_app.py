@@ -5,7 +5,6 @@ import scipy.stats
 from scipy.stats import norm
 import altair as alt
 
-
 import matplotlib as plt
 import seaborn as sns
 import arviz as az
@@ -17,17 +16,17 @@ from ab_testing.distribution_fit.fit_distribution import FitDistribution
 from ab_testing.predictions.produce_predictions import ProducePredictions
 
 st.set_page_config(
-    page_title="A/B Testing App", page_icon="📊", initial_sidebar_state="expanded"
+    page_title="AB Testing", page_icon="📊", initial_sidebar_state="expanded", layout="wide"
 )
 
 st.write(
     """
 # 📊 A/B Testing
-Upload your experiment results to see the significance of your A/B test.
+Upload your experiment results to see the performance of your A/B test.
 """
 )
 
-uploaded_file = st.file_uploader("Upload Parquet", type=".p")
+uploaded_file = st.file_uploader("Upload Parquet File", type=".p")
 
 use_example_file = st.checkbox(
     "Use example file", False, help="Use in-built example file to demo the app"
@@ -36,7 +35,7 @@ use_example_file = st.checkbox(
 ab_default = None
 result_default = None
 
-# If CSV is not uploaded and checkbox is filled, use values from the example file
+# If Parquet is not uploaded and checkbox is filled, use values from the example file
 # and pass them down to the next if block
 if use_example_file:
     uploaded_file = "bingo_aloha_data.p"
@@ -46,10 +45,10 @@ if use_example_file:
 if uploaded_file:
     df = pd.read_parquet(uploaded_file)
     
-    st.markdown("### Data preview")
+    st.markdown("### Data Preview")
     st.dataframe(df.head())
 
-    st.markdown("### Select columns for analysis")
+    st.markdown("### Select Columns for Analysis")
     with st.form(key="my_form"):
         ab = st.multiselect(
             "A/B column",
@@ -74,17 +73,6 @@ if uploaded_file:
             )
             if decide == "No":
                 control, treatment = treatment, control
-            #visitors_a = df[ab[0]].value_counts()[control]
-            #visitors_b = df[ab[0]].value_counts()[treatment]
-
-
-        if result:
-            conversions_a = (
-                df[[ab[0], result[0]]].groupby(ab[0]).agg("sum")[result[0]][control]
-            )
-            conversions_b = (
-                df[[ab[0], result[0]]].groupby(ab[0]).agg("sum")[result[0]][treatment]
-            )
 
         with st.expander("Adjust test parameters"):
             st.markdown("### Parameters")
@@ -97,6 +85,7 @@ if uploaded_file:
                 key="hdi",
                 help=" Values of θ that have at least some minimal level of posterior credibility, such that the total probability of all such θ values is HDI% ",
             )
+            # Add bullet points of data distribution options with optimal distribution in bold...
 
         submit_button = st.form_submit_button(label="Submit")
 
@@ -104,12 +93,12 @@ if uploaded_file:
         st.warning("Please select both an **A/B column** and a **Result column**.")
         st.stop()
 
-    # type(uploaded_file) == str, means the example file was used
+    # to find if example file was used -> type(uploaded_file) == str <- is only true for example file
     name = (
         "bingo_aloha_data.p" if isinstance(uploaded_file, str) else uploaded_file.name
     )
     st.write("")
-    st.write("## Results for A/B test from ", name)
+    st.write("## AB Test Performance For:\n", name)
     st.write("")
     
     # Create test results:
@@ -117,6 +106,7 @@ if uploaded_file:
     result = ProducePredictions()
     results_conversion = result.produce_results_conversion(initial_data)
     results_revenue = result.produce_results_revenue('lognorm', initial_data)
+    # change here once manual selection works
     results_posterior_sample = result._produce_results_lognorm_dist_carry_value(initial_data)
     
     # Set up metrics:
@@ -128,51 +118,97 @@ if uploaded_file:
     hdi_diff           = az.hdi(post_sample_uplift, hdi_prob=st.session_state.hdi)
     
     # Draw up tables:
-    mcol1, mcol2 = st.columns(2)
-    with mcol1:
+    st.write("")
+    row1_space1, row1_col1, row1_space2, row1_col2, row1_space3 = st.columns(
+        (0.1, 1, 0.1, 1, 0.1)
+    )
+    with row1_col1:
         st.metric(
             "Delta ARPUs",
             value = "%.4f€" % (results_revenue[0]['avg_values'] - results_revenue[1]['avg_values']),
         )
-    with mcol2:
+    with row1_col2:
         st.metric(
             "Delta Conversion",
             value = "%.2f%%" % ((results_conversion[0]['positive_rate'] - results_conversion[1]['positive_rate']) * 100),
         )
     
-    # Set up plots:
-    fig1 = plt.pyplot.figure(figsize=(12, 6))
-    fig_temp = sns.kdeplot(post_sample_A, color="blue")
-    fig_temp = sns.kdeplot(post_sample_B, color="red")
-    l1 = fig_temp.lines[0]
-    l2 = fig_temp.lines[1]
-    x1 = l1.get_xydata()[:,0]
-    x2 = l2.get_xydata()[:,0]
-    y1 = l1.get_xydata()[:,1]
-    y2 = l2.get_xydata()[:,1]
-    x1_new = x1[[all(tup) for tup in zip(list(x1 >= hdi_A[0]), list(x1 <= hdi_A[1]))]]
-    x2_new = x2[[all(tup) for tup in zip(list(x2 >= hdi_B[0]), list(x2 <= hdi_B[1]))]]
-    y1_new = y1[[all(tup) for tup in zip(list(x1 >= hdi_A[0]), list(x1 <= hdi_A[1]))]]
-    y2_new = y2[[all(tup) for tup in zip(list(x2 >= hdi_B[0]), list(x2 <= hdi_B[1]))]]
-    plt.pyplot.fill_between(x1_new, y1_new, color="blue", alpha=0.3)
-    plt.pyplot.fill_between(x2_new, y2_new, color="red", alpha=0.3)
-    plt.pyplot.title('Distribution of ARPU A & B')
-    plt.pyplot.legend(labels=['Control','Personalised'])
-    st.pyplot(fig1)
+    st.write("")
+    matplotlib.use("agg")
+    _lock = plt.backends.backend_agg.RendererAgg.lock
+    sns.set_style("darkgrid")
     
-    fig2 = plt.pyplot.figure(figsize=(12, 6))
-    fig_temp = sns.kdeplot(post_sample_uplift, color="purple")
-    l = fig_temp.lines[0]
-    x = l.get_xydata()[:,0]
-    y = l.get_xydata()[:,1]
-    x_new = x[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
-    y_new = y[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
-    plt.pyplot.fill_between(x_new, y_new, color="purple", alpha=0.3)
-    plt.pyplot.title('Apporximate Distribution of Uplifts')
-    st.pyplot(fig2)
+    # Set up plots:
+    row2_space1, row2_col1, row2_space2, row2_col2, row2_space3 = st.columns(
+        (0.1, 1, 0.1, 1, 0.1)
+    )
+    
+    with row2_col1, _lock:
+        st.subheader("Distribution of posterior ARPU A & B")
+        fig = plt.figure.Figure()
+        ax = fig.subplots()
+        fig_temp = sns.kdeplot(post_sample_A, color="blue")
+        fig_temp = sns.kdeplot(post_sample_B, color="red")
+        l1 = fig_temp.lines[0]
+        l2 = fig_temp.lines[1]
+        x1 = l1.get_xydata()[:,0]
+        x2 = l2.get_xydata()[:,0]
+        y1 = l1.get_xydata()[:,1]
+        y2 = l2.get_xydata()[:,1]
+        x1_new = x1[[all(tup) for tup in zip(list(x1 >= hdi_A[0]), list(x1 <= hdi_A[1]))]]
+        x2_new = x2[[all(tup) for tup in zip(list(x2 >= hdi_B[0]), list(x2 <= hdi_B[1]))]]
+        y1_new = y1[[all(tup) for tup in zip(list(x1 >= hdi_A[0]), list(x1 <= hdi_A[1]))]]
+        y2_new = y2[[all(tup) for tup in zip(list(x2 >= hdi_B[0]), list(x2 <= hdi_B[1]))]]
+        plt.pyplot.fill_between(x1_new, y1_new, color="blue", alpha=0.3)
+        plt.pyplot.fill_between(x2_new, y2_new, color="red", alpha=0.3)
+        plt.pyplot.legend(labels=['Control','Personalised'])
+        st.pyplot(fig)
+#     fig_temp = sns.kdeplot(post_sample_A, color="blue")
+#     fig_temp = sns.kdeplot(post_sample_B, color="red")
+#     l1 = fig_temp.lines[0]
+#     l2 = fig_temp.lines[1]
+#     x1 = l1.get_xydata()[:,0]
+#     x2 = l2.get_xydata()[:,0]
+#     y1 = l1.get_xydata()[:,1]
+#     y2 = l2.get_xydata()[:,1]
+#     x1_new = x1[[all(tup) for tup in zip(list(x1 >= hdi_A[0]), list(x1 <= hdi_A[1]))]]
+#     x2_new = x2[[all(tup) for tup in zip(list(x2 >= hdi_B[0]), list(x2 <= hdi_B[1]))]]
+#     y1_new = y1[[all(tup) for tup in zip(list(x1 >= hdi_A[0]), list(x1 <= hdi_A[1]))]]
+#     y2_new = y2[[all(tup) for tup in zip(list(x2 >= hdi_B[0]), list(x2 <= hdi_B[1]))]]
+#     plt.pyplot.fill_between(x1_new, y1_new, color="blue", alpha=0.3)
+#     plt.pyplot.fill_between(x2_new, y2_new, color="red", alpha=0.3)
+#     plt.pyplot.title('Distribution of ARPU A & B')
+#     plt.pyplot.legend(labels=['Control','Personalised'])
+#     st.pyplot(fig1)
+
+    with row2_col2, _lock:
+        st.subheader("Apporximate Distribution of Uplifts")
+        fig2 = plt.figure.Figure()
+        ax2 = fig.subplots()
+        fig_temp2 = sns.kdeplot(post_sample_uplift, color="purple")
+        l = fig_temp2.lines[0]
+        x = l.get_xydata()[:,0]
+        y = l.get_xydata()[:,1]
+        x_new = x[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
+        y_new = y[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
+        plt.pyplot.fill_between(x_new, y_new, color="purple", alpha=0.3)
+        st.pyplot(fig)
+    
+#     fig2 = plt.pyplot.figure(figsize=(12, 6))
+#     fig_temp = sns.kdeplot(post_sample_uplift, color="purple")
+#     l = fig_temp.lines[0]
+#     x = l.get_xydata()[:,0]
+#     y = l.get_xydata()[:,1]
+#     x_new = x[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
+#     y_new = y[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
+#     plt.pyplot.fill_between(x_new, y_new, color="purple", alpha=0.3)
+#     plt.pyplot.title('Apporximate Distribution of Uplifts')
+#     st.pyplot(fig2)
 
     # Set up end tables:
-    ncol1, ncol2 = st.columns([2, 1])
+    row3_space1, row3_col1, row3_space2, row3_col2, row3_space3 = st.columns(
+        (0.1, 1, 0.1, 1, 0.1)
+    )
 
     # Table1
     output_df = pd.DataFrame(columns=["Metric", "Conversion", "Revenue"])
@@ -187,7 +223,7 @@ if uploaded_file:
         "%.4f%%" % (results_revenue[0]["expected_loss"] * 100),
         "%.4f%%" % (results_revenue[1]["expected_loss"] * 100),
     ]
-    table1 = ncol1.write(output_df)
+    table1 = row3_col1.write(output_df)
 
     # Table2
     output_df2 = pd.DataFrame(columns=["Metric", "Control", "Personalised", "Personalised-Control"])
@@ -213,4 +249,4 @@ if uploaded_file:
         "%.4f€" % (results_revenue[0]['avg_positive_values'] - results_revenue[1]['avg_positive_values']),
         "[%.4f€, %.4f€]" % (hdi_diff[0], hdi_diff[1]),
     ]
-    table2 = ncol1.write(output_df2)
+    table2 = row3_col2.write(output_df2)
