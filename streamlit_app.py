@@ -175,7 +175,7 @@ if uploaded_file:
         y = l.get_xydata()[:,1]
         x_new = x[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
         y_new = y[[all(tup) for tup in zip(list(x >= hdi_diff[0]), list(x <= hdi_diff[1]))]]
-        ax2.xaxis.set_major_formatter(plt.ticker.PercentFormatter())
+        ax2.xaxis.set_major_formatter(plt.ticker.PercentFormatter(xmax = 1, decimals = 2))
         ax2.fill_between(x_new, y_new, color="purple", alpha=0.3)
         st.pyplot(fig2)
 
