@@ -194,7 +194,7 @@ if uploaded_file:
     ]
     output_df["Revenue"] = [
         "%.4f%%" % (results_revenue[0]["prob_being_best"] * 100),
-        "%.2f$" % (results_revenue[0]["expected_loss"]),
+        "%.4f$" % (results_revenue[0]["expected_loss"]),
         "%.4f$" % (results_revenue[1]["expected_loss"]),
     ]
     output_df = output_df.set_index('Metric')
