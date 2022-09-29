@@ -126,7 +126,7 @@ if uploaded_file:
     with row1_col1:
         st.metric(
             "Delta ARPUs",
-            value = "%.4f€" % (results_revenue[0]['avg_values'] - results_revenue[1]['avg_values']),
+            value = "%.4f$" % (results_revenue[0]['avg_values'] - results_revenue[1]['avg_values']),
         )
     with row1_col2:
         st.metric(
@@ -189,13 +189,13 @@ if uploaded_file:
     output_df["Metric"] = ["P( P > C)", "E( loss | P > C)", "E( loss | C > P)"]
     output_df["Conversion"] = [
         "%.4f%%" % (results_conversion[0]["prob_being_best"] * 100),
-        "%.4f%%" % (results_conversion[0]["expected_loss"] * 100),
-        "%.4f%%" % (results_conversion[1]["expected_loss"] * 100),
+        "%.4f$" % (results_conversion[0]["expected_loss"]),
+        "%.4f$" % (results_conversion[1]["expected_loss"]),
     ]
     output_df["Revenue"] = [
         "%.4f%%" % (results_revenue[0]["prob_being_best"] * 100),
-        "%.4f%%" % (results_revenue[0]["expected_loss"] * 100),
-        "%.4f%%" % (results_revenue[1]["expected_loss"] * 100),
+        "%.2f$" % (results_revenue[0]["expected_loss"]),
+        "%.4f$" % (results_revenue[1]["expected_loss"]),
     ]
     output_df = output_df.set_index('Metric')
     table1 = row3_col2.write(output_df)
@@ -206,23 +206,23 @@ if uploaded_file:
     output_df2["Control"] = [
         "%d" % (results_revenue[1]['totals']),
         "%.2f%%" % (results_conversion[1]['positive_rate'] * 100),
-        "%.4f€" % (results_revenue[1]['avg_values']),
-        "%.4f€" % (results_revenue[1]['avg_positive_values']),
-        "[%.4f€, %.4f€]" % (hdi_A[0], hdi_A[1]),
+        "%.4f$" % (results_revenue[1]['avg_values']),
+        "%.4f$" % (results_revenue[1]['avg_positive_values']),
+        "[%.4f$, %.4f$]" % (hdi_A[0], hdi_A[1]),
     ]
     output_df2["Personalised"] = [
         "%d" % (results_revenue[0]['totals']),
         "%.2f%%" % (results_conversion[0]['positive_rate'] * 100),
-        "%.4f€" % (results_revenue[0]['avg_values']),
-        "%.4f€" % (results_revenue[0]['avg_positive_values']),
-        "[%.4f€, %.4f€]" % (hdi_B[0], hdi_B[1]),
+        "%.4f$" % (results_revenue[0]['avg_values']),
+        "%.4f$" % (results_revenue[0]['avg_positive_values']),
+        "[%.4f$, %.4f$]" % (hdi_B[0], hdi_B[1]),
     ]
     output_df2["Personalised-Control"] = [
         np.NAN,
         "%.2f%%" % ((results_conversion[0]['positive_rate'] - results_conversion[1]['positive_rate']) * 100),
-        "%.4f€" % (results_revenue[0]['avg_values'] - results_revenue[1]['avg_values']),
-        "%.4f€" % (results_revenue[0]['avg_positive_values'] - results_revenue[1]['avg_positive_values']),
-        "[%.4f€, %.4f€]" % (hdi_diff_ab[0], hdi_diff_ab[1]),
+        "%.4f$" % (results_revenue[0]['avg_values'] - results_revenue[1]['avg_values']),
+        "%.4f$" % (results_revenue[0]['avg_positive_values'] - results_revenue[1]['avg_positive_values']),
+        "[%.4f$, %.4f$]" % (hdi_diff_ab[0], hdi_diff_ab[1]),
     ]
     output_df2 = output_df2.set_index('Metric')
     table2 = row3_col1.write(output_df2)
