@@ -188,12 +188,12 @@ if uploaded_file:
     output_df = pd.DataFrame(columns=["Metric", "Conversion", "Revenue"])
     output_df["Metric"] = ["P( P > C)", "E( loss | P > C)", "E( loss | C > P)"]
     output_df["Conversion"] = [
-        "%.4f%%" % (results_conversion[0]["prob_being_best"] * 100),
+        "%.2f%%" % (results_conversion[0]["prob_being_best"] * 100),
         "%.4f$" % (results_conversion[0]["expected_loss"]),
         "%.4f$" % (results_conversion[1]["expected_loss"]),
     ]
     output_df["Revenue"] = [
-        "%.4f%%" % (results_revenue[0]["prob_being_best"] * 100),
+        "%.2f%%" % (results_revenue[0]["prob_being_best"] * 100),
         "%.4f$" % (results_revenue[0]["expected_loss"]),
         "%.4f$" % (results_revenue[1]["expected_loss"]),
     ]
