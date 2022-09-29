@@ -162,7 +162,7 @@ if uploaded_file:
         y2_new = y2[[all(tup) for tup in zip(list(x2 >= hdi_B[0]), list(x2 <= hdi_B[1]))]]
         ax.fill_between(x1_new, y1_new, color="blue", alpha=0.3)
         ax.fill_between(x2_new, y2_new, color="red", alpha=0.3)
-        plt.pyplot.legend(labels=['Control','Personalised'])
+        ax.legend(labels=['Control','Personalised'])
         st.pyplot(fig)
 
     with row2_col2, _lock:
