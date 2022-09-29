@@ -37,7 +37,7 @@ result_default = None
 # If Parquet is not uploaded and checkbox is filled, use values from the example file
 # and pass them down to the next if block
 if use_example_file:
-    uploaded_file = "bingo_aloha_data.p"
+    uploaded_file = "test_data.p"
     ab_default = ["test_group"]
     result_default = ["total_wins_spend"]
 
@@ -94,7 +94,7 @@ if uploaded_file:
 
     # to find if example file was used -> type(uploaded_file) == str <- is only true for example file
     name = (
-        "bingo_aloha_data.p" if isinstance(uploaded_file, str) else uploaded_file.name
+        "test_data.p" if isinstance(uploaded_file, str) else uploaded_file.name
     )
     st.write("")
     st.write("## AB Test Performance For:\n", name)
